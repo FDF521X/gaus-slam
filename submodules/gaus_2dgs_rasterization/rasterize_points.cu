@@ -18,6 +18,7 @@
 #include <stdio.h>
 #include <cuda_runtime_api.h>
 #include <memory>
+#include <cstdint>
 #include "cuda_rasterizer/config.h"
 #include "cuda_rasterizer/rasterizer.h"
 #include <fstream>
@@ -36,12 +37,12 @@ std::function<char*(size_t N)> resizeFunctional(torch::Tensor& t) {
 	return lambda;
 }
 
-std::tuple<int, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor>
+std::tuple<int, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor>
 RasterizeGaussiansCUDA(
-	const torch::Tensor& background,
-	const torch::Tensor& means3D,
-	const torch::Tensor& colors,
-	const torch::Tensor& opacity,
+        const torch::Tensor& background,
+        const torch::Tensor& means3D,
+        const torch::Tensor& colors,
+        const torch::Tensor& opacity,
 	const torch::Tensor& scales,
 	const torch::Tensor& rotations,
 	const float scale_modifier,
@@ -86,6 +87,8 @@ RasterizeGaussiansCUDA(
   torch::Tensor out_color = torch::full({NUM_CHANNELS, H, W}, 0.0, float_opts);
   torch::Tensor out_others = torch::full({3+3+1, H, W}, 0.0, float_opts);
   torch::Tensor radii = torch::full({P}, 0, means3D.options().dtype(torch::kInt32));
+  torch::Tensor alpha_contrib = torch::full({P}, 0.0, float_opts);
+  torch::Tensor alpha_contrib_count = torch::full({P}, 0, int_opts);
   torch::Tensor out_mask = torch::full({1, H, W}, 0.0, float_opts);
 
   torch::Device device(torch::kCUDA);
@@ -126,15 +129,17 @@ RasterizeGaussiansCUDA(
 		campos.contiguous().data<float>(),
 		tan_fovx,
 		tan_fovy,
-		prefiltered,
-		out_color.contiguous().data<float>(),
-		out_mask.contiguous().data<float>(),
-		out_others.contiguous().data<float>(),
-		radii.contiguous().data<int>(),
-		use_sa,
-		debug);
+                prefiltered,
+                out_color.contiguous().data<float>(),
+                out_mask.contiguous().data<float>(),
+                out_others.contiguous().data<float>(),
+                alpha_contrib.data_ptr<float>(),
+                reinterpret_cast<uint32_t*>(alpha_contrib_count.data_ptr<int>()),
+                radii.contiguous().data<int>(),
+                use_sa,
+                debug);
   }
-  return std::make_tuple(rendered, out_color, out_others, radii, geomBuffer, binningBuffer, imgBuffer);
+  return std::make_tuple(rendered, out_color, out_others, radii, alpha_contrib, alpha_contrib_count, geomBuffer, binningBuffer, imgBuffer);
 }
 
 std::tuple<torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor, torch::Tensor>
