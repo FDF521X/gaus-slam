@@ -42,7 +42,7 @@ def render(
     rotations = None,
     cov3D_precomp = None,    
 ):
-    color_map, radius, allmap = Renderer(rendercamera)(
+    color_map, radius, allmap, gaussian_alpha_contrib, gaussian_alpha_contrib_count = Renderer(rendercamera)(
         means3D,
         means2D,
         opacities = opacities,
@@ -62,5 +62,7 @@ def render(
         "render_normal": allmap[2:5],
         "render_middepth": allmap[5: 6],
         "render_dist": allmap[6:7],
+        "gaussian_alpha_contrib": gaussian_alpha_contrib,
+        "gaussian_alpha_contrib_count": gaussian_alpha_contrib_count,
     }
     

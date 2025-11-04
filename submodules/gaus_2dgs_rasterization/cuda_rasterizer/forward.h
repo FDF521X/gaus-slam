@@ -60,15 +60,17 @@ namespace FORWARD
 		const float* features,
 		const float* transMats,
 		const float* depths,
-		const float4* normal_opacity,
-		float* final_T,
-		uint32_t* n_contrib,
-		const float* bg_color,
-		float* out_color,
-		float* out_others,
-		float* median_depth,
-		float* depth_std,
-		bool use_sa);
+                const float4* normal_opacity,
+                float* final_T,
+                uint32_t* n_contrib,
+                const float* bg_color,
+                float* out_color,
+                float* out_others,
+                float* gaussian_contrib,
+                uint32_t* gaussian_contrib_count,
+                float* median_depth,
+                float* depth_std,
+                bool use_sa);
 		
 }
 

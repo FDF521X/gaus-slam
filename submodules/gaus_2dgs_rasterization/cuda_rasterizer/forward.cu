@@ -267,14 +267,16 @@ renderCUDA(
 	const float* __restrict__ transMats,
 	const float* __restrict__ depths,
 	const float4* __restrict__ normal_opacity,
-	float* __restrict__ final_T,
-	uint32_t* __restrict__ n_contrib,
-	const float* __restrict__ bg_color,
-	float* __restrict__ out_color,
-	float* __restrict__ out_others,
-	float* __restrict__ geo_median_depth,
-	float* __restrict__ geo_depth_std,
-	bool use_sa)
+        float* __restrict__ final_T,
+        uint32_t* __restrict__ n_contrib,
+        const float* __restrict__ bg_color,
+        float* __restrict__ out_color,
+        float* __restrict__ out_others,
+        float* __restrict__ gaussian_contrib,
+        uint32_t* __restrict__ gaussian_contrib_count,
+        float* __restrict__ geo_median_depth,
+        float* __restrict__ geo_depth_std,
+        bool use_sa)
 {
 	// Identify current tile and associated min/max pixel range.
 	auto block = cg::this_thread_block();
@@ -392,7 +394,15 @@ renderCUDA(
 				continue;
 			}
 
-			float w = alpha * T;
+                        float w = alpha * T;
+                        if (gaussian_contrib != nullptr)
+                        {
+                                atomicAdd(&gaussian_contrib[collected_id[j]], w);
+                        }
+                        if (gaussian_contrib_count != nullptr)
+                        {
+                                atomicAdd(&gaussian_contrib_count[collected_id[j]], 1u);
+                        }
 			// entroy += -w * log(w);
 			if (T > 0.5) {
 				median_depth = depth;
@@ -481,12 +491,14 @@ void FORWARD::render(
 	uint32_t* n_contrib,
 	const float* bg_color,
 	float* out_color,
-	float* out_others,
-	float* median_depth, 
-	float* depth_std,
-	bool use_sa)
+        float* out_others,
+        float* gaussian_contrib,
+        uint32_t* gaussian_contrib_count,
+        float* median_depth,
+        float* depth_std,
+        bool use_sa)
 {
-	renderCUDA<NUM_CHANNELS> << <grid, block >> > (
+        renderCUDA<NUM_CHANNELS> << <grid, block >> > (
 		ranges,
 		point_list,
 		W, H,
@@ -498,12 +510,14 @@ void FORWARD::render(
 		normal_opacity,
 		final_T,
 		n_contrib,
-		bg_color,
-		out_color,
-		out_others,
-		median_depth,
-		depth_std,
-		use_sa);
+                bg_color,
+                out_color,
+                out_others,
+                gaussian_contrib,
+                gaussian_contrib_count,
+                median_depth,
+                depth_std,
+                use_sa);
 }
 
 void FORWARD::preprocess(int P, int D, int M,
