@@ -47,13 +47,15 @@ namespace CudaRasterizer
 			const float* projmatrix,
 			const float* cam_pos,
 			const float tan_fovx, float tan_fovy,
-			const bool prefiltered,
-			float* out_color,
-			float* out_mask,
-			float* out_others,
-			int* radii = nullptr,
-			bool use_sa = false,
-			bool debug = false);
+                        const bool prefiltered,
+                        float* out_color,
+                        float* out_mask,
+                        float* out_others,
+                        float* gaussian_contrib,
+                        uint32_t* gaussian_contrib_count,
+                        int* radii = nullptr,
+                        bool use_sa = false,
+                        bool debug = false);
 
 		static void backward(
 			const int P, int D, int M, int R,

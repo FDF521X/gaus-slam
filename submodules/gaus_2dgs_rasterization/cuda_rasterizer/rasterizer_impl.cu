@@ -216,14 +216,16 @@ int CudaRasterizer::Rasterizer::forward(
 	const float* viewmatrix,
 	const float* projmatrix,
 	const float* cam_pos,
-	const float tan_fovx, float tan_fovy,
-	const bool prefiltered,
-	float* out_color,
-	float* out_mask,
-	float* out_others,
-	int* radii,
-	bool use_sa,
-	bool debug)
+        const float tan_fovx, float tan_fovy,
+        const bool prefiltered,
+        float* out_color,
+        float* out_mask,
+        float* out_others,
+        float* gaussian_contrib,
+        uint32_t* gaussian_contrib_count,
+        int* radii,
+        bool use_sa,
+        bool debug)
 {
 	const float focal_y = height / (2.0f * tan_fovy);
 	const float focal_x = width / (2.0f * tan_fovx);
@@ -338,13 +340,15 @@ int CudaRasterizer::Rasterizer::forward(
 		geomState.depths,
 		geomState.normal_opacity,
 		imgState.accum_alpha,
-		imgState.n_contrib,
-		background,
-		out_color,
-		out_others,
-		imgState.m_media_depth,
-		imgState.depth_std,
-		use_sa), debug)
+                imgState.n_contrib,
+                background,
+                out_color,
+                out_others,
+                gaussian_contrib,
+                gaussian_contrib_count,
+                imgState.m_media_depth,
+                imgState.depth_std,
+                use_sa), debug)
 
 	return num_rendered;
 }
